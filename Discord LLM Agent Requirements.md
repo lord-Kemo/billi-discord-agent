@@ -7,7 +7,7 @@ Scope root: `05 - Projects/Billi`
 - Build a local-first LLM agent for Discord.
 - The agent must be reachable in Discord via mention in text channels.
 - The agent must be controllable from VS Code through MCP tools.
-- The runtime must be 24/7 on local infrastructure (your machine), with no paid services.
+- The runtime must be 24/7 on local infrastructure (your machine), using free-tier AI providers in phase 1.
 
 ## 2. Goals
 - Provide ChatGPT-like interaction for Discord operations.
@@ -23,14 +23,17 @@ Scope root: `05 - Projects/Billi`
 - No full voice-call conversation pipeline in phase 1 (voice can be phase 2).
 
 ## 4. Core Constraints
-- Local model runtime: Ollama.
-- Initial model target: Qwen2.5-7B-Instruct GGUF (`Q4_K_M` quantization).
+- Primary LLM provider: Gemini API (free tier).
+- Secondary LLM provider: OpenRouter (routing/fallback).
+- Chat routing may use high-throughput OpenRouter pools.
+- Tool execution must use pinned stable models only.
+- Local model fallback (Ollama) is deferred to a later phase.
 - Discord operations must use official bot account permissions only.
 - Implementation coding is done by owner; architecture/planning support only until requested.
 
 ## 5. System Architecture Requirements
 - `Discord Bot Runtime`: always-on process connected to Discord Gateway.
-- `LLM Layer`: local Ollama model for reasoning and response generation.
+- `LLM Layer`: provider router with separate execution and chat lanes.
 - `Policy Guard`: validates who asked, where, and whether action is allowed.
 - `Command Router`: routes mention commands and MCP commands.
 - `Action Executor`: performs approved Discord operations.
@@ -82,7 +85,7 @@ Scope root: `05 - Projects/Billi`
 - Command policy definitions (source + actor + action)
 - Audit log of executed and blocked actions
 - Pending confirmations for high-risk operations
-- Model/runtime settings (model name, context controls, safety flags)
+- Model/runtime settings (provider, lane, model list, timeout, retry, safety flags)
 
 ## 10. Operations Requirements
 - Start automatically on machine boot.
@@ -94,8 +97,9 @@ Scope root: `05 - Projects/Billi`
 ## 11. Roadmap
 - `Phase 0` Foundation: runtime skeleton, policy guard, local persistence, health checks.
 - `Phase 1` Text + Control: mentions in text channels, watch channels, MCP control path, audit logging.
-- `Phase 2` Voice: voice channel join/listen/speak pipeline (STT/TTS), gated by strict policy.
-- `Phase 3` Hardening: richer guardrails, quality improvements, prompt/tool optimization.
+- `Phase 2` Reliability: add local LLM fallback (Ollama) and provider resilience hardening.
+- `Phase 3` Voice: voice channel join/listen/speak pipeline (STT/TTS), gated by strict policy.
+- `Phase 4` Hardening: richer guardrails, quality improvements, prompt/tool optimization.
 
 ## 12. Acceptance Criteria
 - Bot remains active and reconnects automatically when disconnected.
@@ -111,8 +115,16 @@ Scope root: `05 - Projects/Billi`
 - Guild/channel/user allowlists for first deployment.
 - Whether moderation actions are enabled in phase 1 or phase 2.
 - Retention period for logs and conversation context.
+- Exact pinned execution models (Gemini primary, OpenRouter fallback A/B).
+- Exact chat pool model list and throughput routing policy.
 - Voice feature priority and scope.
 
 ## 14. Immediate Next Step
 - Produce a strict `Command and Permission Matrix` document.
 - Required columns: `command`, `source`, `allowed actor`, `allowed channels`, `risk tier`, `confirmation required`, `audit fields`.
+
+## 15. Linked Policy
+- `docs/LLM-Provider-Policy.md`
+- `docs/Action-Catalog.md`
+- `docs/Command-Permission-Matrix.md`
+- `docs/Data-Context-Strategy.md`
